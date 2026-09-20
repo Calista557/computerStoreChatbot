@@ -105,7 +105,7 @@ async function extractSearchCriteriaKeywords(customerMessage) {
     criteria.maxPrice = value;
   }
 
-  const minPriceMatch = text.match(/(?:above|over|more than|at least)\s*(?:₦|ngn|naira)?\s*([\d,]+)\s*(k)?/);
+  const minPriceMatch = text.match(/(?<!not )(?:above|over|more than|at least)\s*(?:₦|ngn|naira)?\s*([\d,]+)\s*(k)?/);
   if (minPriceMatch) {
     let value = Number(minPriceMatch[1].replace(/,/g, ''));
     if (minPriceMatch[2]) value *= 1000;
