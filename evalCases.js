@@ -1,0 +1,16 @@
+export const evalCases = [
+  { message: "A laptop with a 15 inch screen", expected: { category: "laptop" } },
+  { message: "Do you have servers?", expected: { category: "server" } },
+  { message: "I need a laptop under 200k", expected: { category: "laptop", maxPrice: 200000 } },
+  { message: "Delivery within 3 days for a Dell with 8gb ram", expected: { brand: "Dell", minRam: 8 } },
+  { message: "I need RAM of 8GB, SSD, at least 100k", expected: { minRam: 8, storageType: "SSD", minPrice: 100000 } },
+  { message: "Do you have HP laptops with 16gb ram?", expected: { category: "laptop", brand: "HP", minRam: 16 } },
+  { message: "I want a Dell desktop with NVMe storage", expected: { category: "desktop", brand: "Dell", storageType: "NVMe" } },
+  { message: "Show me monitors below 50,000 naira", expected: { category: "monitor", maxPrice: 50000 } },
+  { message: "Any laptop over 300k?", expected: { category: "laptop", minPrice: 300000 } },
+  { message: "Do you sell graphics cards?", expected: { category: "gpu" } },
+  { message: "What is your best price for a used HP laptop?", expected: { category: "laptop", brand: "HP" } },
+  { message: "Do you have all in one PCs?", expected: { category: "all-in-one" } },
+  { message: "Laptop not more than 150,000 with SSD", expected: { category: "laptop", maxPrice: 150000, storageType: "SSD" } },
+  { message: "Hello, good morning", expected: {} },
+];
