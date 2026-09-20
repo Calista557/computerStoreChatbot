@@ -31,4 +31,8 @@ for (const testCase of evalCases) {
 }
 
 console.log(`\nScore: ${passed} / ${evalCases.length}`);
-console.log(`Answered by the model: ${evalCases.length - stats.fallbacks} / ${evalCases.length}`);
+if (process.env.USE_MODEL !== "false") {
+  console.log(`Answered by the model: ${evalCases.length - stats.fallbacks} / ${evalCases.length}`);
+} else {
+  console.log("Keyword mode: the model was not used");
+}
