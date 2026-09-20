@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { extractSearchCriteria } from "./services/aiService.js";
+import { extractSearchCriteria, stats } from "./services/aiService.js";
 import { evalCases } from "./evalCases.js";
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -31,3 +31,4 @@ for (const testCase of evalCases) {
 }
 
 console.log(`\nScore: ${passed} / ${evalCases.length}`);
+console.log(`Answered by the model: ${evalCases.length - stats.fallbacks} / ${evalCases.length}`);

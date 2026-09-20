@@ -9,6 +9,9 @@ const MODEL = "gemini-3.5-flash";
 // Set USE_MODEL=false in .env to skip the model and use keyword matching only
 const USE_MODEL = process.env.USE_MODEL !== "false";
 
+// Counts how many times the keyword backup had to answer after a model failure
+export const stats = { fallbacks: 0 };
+
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // A daily quota error cannot be fixed by retrying, so we detect it
@@ -105,6 +108,7 @@ async function extractSearchCriteriaKeywords(customerMessage) {
     criteria.maxPrice = value;
   }
 
+  // (?<!not ) stops "not more than 150,000" from also setting a minimum price
   const minPriceMatch = text.match(/(?<!not )(?:above|over|more than|at least)\s*(?:₦|ngn|naira)?\s*([\d,]+)\s*(k)?/);
   if (minPriceMatch) {
     let value = Number(minPriceMatch[1].replace(/,/g, ''));
@@ -147,6 +151,7 @@ export async function extractSearchCriteria(customerMessage) {
     }
   }
 
+  stats.fallbacks++; // count every case the keyword backup had to answer
   return extractSearchCriteriaKeywords(customerMessage);
 }
 
