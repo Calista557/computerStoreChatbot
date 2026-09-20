@@ -1,9 +1,17 @@
 import express from 'express';
 import { searchProducts } from '../services/productService.js';
 import { extractSearchCriteria, generateReply, detectIntent } from '../services/aiService.js';
-import Inquiry from '../models/Inquiry.js';
+import Inquiry from '../models/inquiry.js';
 
 const router = express.Router();
+
+const handoffNotes = {
+  'ready-to-buy': 'A staff member will contact you shortly to complete your order.',
+  'wants-delivery': 'A staff member will contact you shortly about delivery.',
+  'wants-negotiation': 'A staff member will contact you shortly to discuss the price.',
+  'wants-warranty-info': 'A staff member will contact you shortly with warranty details.',
+  'needs-human-help': 'A staff member will contact you shortly.',
+};
 
 // POST /api/chat  { "message": "...", "customerName": "...", "customerContact": "...", "channel": "whatsapp" }
 router.post('/', async (req, res) => {
@@ -17,6 +25,10 @@ router.post('/', async (req, res) => {
 
     const intent = detectIntent(message);
     const needsHandoff = intent !== 'other';
+    const followUp = customerContact
+      ? handoffNotes[intent]
+      : 'Please share your phone number or WhatsApp so a staff member can reach you.';
+    const finalReply = needsHandoff ? `${reply}\n\n${followUp}` : reply;
 
     // Snapshot exactly what the customer was shown, so this record stays
     // accurate even if prices/stock change later.
@@ -48,7 +60,7 @@ router.post('/', async (req, res) => {
       inquiryId = inquiry._id;
     }
 
-    res.json({ reply, matchedProducts: products, criteriaUsed: criteria, inquiryId, needsHandoff });
+    res.json({ reply: finalReply, matchedProducts: products, criteriaUsed: criteria, inquiryId, needsHandoff });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
