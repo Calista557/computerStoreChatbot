@@ -25,6 +25,9 @@ const inquirySchema = new Schema(
       },
     ],
 
+    // true when the customer was shown alternatives, not an exact match
+    closestMatches: { type: Boolean, default: false },
+
     needsHandoff: { type: Boolean, default: false },
     handoffReason: {
       type: String,

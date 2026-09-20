@@ -44,8 +44,10 @@ router.post('/', async (req, res) => {
     const needsHandoff = intent !== 'other';
 
     // Only promise a callback if we actually have a way to reach the customer
-    const followUp = customerContact
-      ? handoffNotes[intent]
+  const followUp = customerContact
+      ? (isAlternative
+          ? 'A staff member will contact you shortly to help you find what you need.'
+          : handoffNotes[intent])
       : 'Please share your phone number or WhatsApp so a staff member can reach you.';
     const finalReply = needsHandoff ? `${reply}\n\n${followUp}` : reply;
 
