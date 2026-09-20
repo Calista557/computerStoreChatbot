@@ -69,12 +69,13 @@ router.post('/', async (req, res) => {
     // collection with noise that buries the leads that matter.
     let inquiryId = null;
     if (needsHandoff) {
-      const inquiry = await Inquiry.create({
+    const inquiry = await Inquiry.create({
         customerName,
         customerContact,
         channel: channel || 'web',
         message,
         matchedItems,
+        closestMatches: isAlternative,
         needsHandoff,
         handoffReason: intent,
       });
