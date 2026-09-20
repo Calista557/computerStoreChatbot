@@ -1,4 +1,4 @@
-import Product from '../models/Product.js';
+import Product from '../models/product.js';
 
 // Shared by /api/products and the chat flow, so search behaves
 // identically no matter which door the customer came through.
