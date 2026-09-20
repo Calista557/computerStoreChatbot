@@ -122,7 +122,7 @@
         background: rgba(255, 255, 255, 0.23);
       }
 
-      /* Optional customer details */
+      /* Customer details */
       .customer-details {
         border-bottom: 1px solid var(--border);
         padding: 10px 14px;
@@ -509,6 +509,9 @@
         input.value = "";
         setTyping(true);
 
+        // True when the bot needs a phone number before staff can follow up
+        let needsContact = false;
+
         try {
           const response = await fetch("/api/chat", {
             method: "POST",
@@ -528,6 +531,7 @@
               data.reply || "Sorry, I could not find an answer for that.",
               "bot",
             );
+            needsContact = Boolean(data.needsHandoff && !data.inquiryId);
           } else {
             console.error("Chat error:", data.error);
             addBubble("Sorry, something went wrong. Please try again.", "bot");
@@ -542,7 +546,7 @@
           setTyping(false);
           busy = false;
           sendButton.disabled = false;
-          input.focus();
+          (needsContact ? phoneInput : input).focus();
         }
       }
 

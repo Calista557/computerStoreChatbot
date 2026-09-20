@@ -44,11 +44,11 @@ router.post('/', async (req, res) => {
     const needsHandoff = intent !== 'other';
 
     // Only promise a callback if we actually have a way to reach the customer
-  const followUp = customerContact
+    const followUp = customerContact
       ? (isAlternative
           ? 'A staff member will contact you shortly to help you find what you need.'
           : handoffNotes[intent])
-      : 'Please share your phone number or WhatsApp so a staff member can reach you.';
+      : 'To arrange this, please enter your name and phone number or WhatsApp in the boxes above, then send your message again.';
     const finalReply = needsHandoff ? `${reply}\n\n${followUp}` : reply;
 
     // Snapshot exactly what the customer was shown, so this record stays
@@ -64,12 +64,12 @@ router.post('/', async (req, res) => {
       configurationSnapshot: product.configurations,
     }));
 
-    // Only log an Inquiry when it actually needs staff attention --
-    // routine browsing ("do you have servers?") shouldn't fill this
-    // collection with noise that buries the leads that matter.
+    // Only log an Inquiry when it needs staff attention AND staff have a
+    // way to reach the customer. Routine browsing ("do you have servers?")
+    // should not fill this collection with noise that buries real leads.
     let inquiryId = null;
-    if (needsHandoff) {
-    const inquiry = await Inquiry.create({
+    if (needsHandoff && customerContact) {
+      const inquiry = await Inquiry.create({
         customerName,
         customerContact,
         channel: channel || 'web',
