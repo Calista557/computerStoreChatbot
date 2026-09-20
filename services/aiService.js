@@ -1,4 +1,38 @@
-export async function extractSearchCriteria(customerMessage) {
+import "dotenv/config";
+import { GoogleGenAI, Type, FunctionCallingConfigMode } from "@google/genai";
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const searchProductsTool = {
+  name: "search_products",
+  description:
+    "Search the shop's real inventory. Call this whenever a customer asks about products, specs, or prices.",
+  parameters: {
+    type: Type.OBJECT,
+    properties: {
+      category: {
+        type: Type.STRING,
+        enum: [
+          "desktop", "laptop", "all-in-one", "monitor", "gpu", "server",
+          "standalone-system", "thin-client", "keyboard", "mouse", "accessory",
+        ],
+        description: "The type of product the customer wants",
+      },
+      brand: { type: Type.STRING, description: "Brand name, for example Dell or HP" },
+      minRam: { type: Type.NUMBER, description: "Minimum RAM in GB" },
+      storageType: {
+        type: Type.STRING,
+        enum: ["SSD", "HDD", "NVMe"],
+        description: "Type of storage drive",
+      },
+      maxPrice: { type: Type.NUMBER, description: "Maximum price in naira, as a full number" },
+      minPrice: { type: Type.NUMBER, description: "Minimum price in naira, as a full number" },
+    },
+  },
+};
+
+// Backup: the original keyword version, used only if the model call fails
+async function extractSearchCriteriaKeywords(customerMessage) {
   const text = customerMessage.toLowerCase();
   const criteria = {};
 
@@ -66,6 +100,28 @@ export async function extractSearchCriteria(customerMessage) {
   }
 
   return criteria;
+}
+
+export async function extractSearchCriteria(customerMessage) {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3.5-flash",
+      contents: customerMessage,
+      config: {
+        tools: [{ functionDeclarations: [searchProductsTool] }],
+        toolConfig: {
+          functionCallingConfig: {
+            mode: FunctionCallingConfigMode.ANY,
+            allowedFunctionNames: ["search_products"],
+          },
+        },
+      },
+    });
+    return response.functionCalls?.[0]?.args ?? {};
+  } catch (error) {
+    console.error("Model extraction failed, using keyword fallback:", error.message);
+    return extractSearchCriteriaKeywords(customerMessage);
+  }
 }
 
 export function detectIntent(customerMessage) {
