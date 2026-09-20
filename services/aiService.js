@@ -3,6 +3,19 @@ import { GoogleGenAI, Type, FunctionCallingConfigMode } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Change this one line to switch models
+const MODEL = "gemini-3.5-flash";
+
+// Set USE_MODEL=false in .env to skip the model and use keyword matching only
+const USE_MODEL = process.env.USE_MODEL !== "false";
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// A daily quota error cannot be fixed by retrying, so we detect it
+function isQuotaError(error) {
+  return error.status === 429 || String(error.message).includes("RESOURCE_EXHAUSTED");
+}
+
 const searchProductsTool = {
   name: "search_products",
   description:
@@ -31,7 +44,7 @@ const searchProductsTool = {
   },
 };
 
-// Backup: the original keyword version, used only if the model call fails
+// Keyword version: used when USE_MODEL=false, or when the model call fails
 async function extractSearchCriteriaKeywords(customerMessage) {
   const text = customerMessage.toLowerCase();
   const criteria = {};
@@ -103,25 +116,38 @@ async function extractSearchCriteriaKeywords(customerMessage) {
 }
 
 export async function extractSearchCriteria(customerMessage) {
-  try {
-    const response = await ai.models.generateContent({
-      model: "gemini-3.5-flash",
-      contents: customerMessage,
-      config: {
-        tools: [{ functionDeclarations: [searchProductsTool] }],
-        toolConfig: {
-          functionCallingConfig: {
-            mode: FunctionCallingConfigMode.ANY,
-            allowedFunctionNames: ["search_products"],
+  if (!USE_MODEL) return extractSearchCriteriaKeywords(customerMessage);
+
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: customerMessage,
+        config: {
+          httpOptions: { timeout: 10000 },
+          tools: [{ functionDeclarations: [searchProductsTool] }],
+          toolConfig: {
+            functionCallingConfig: {
+              mode: FunctionCallingConfigMode.ANY,
+              allowedFunctionNames: ["search_products"],
+            },
           },
         },
-      },
-    });
-    return response.functionCalls?.[0]?.args ?? {};
-  } catch (error) {
-    console.error("Model extraction failed, using keyword fallback:", error.message);
-    return extractSearchCriteriaKeywords(customerMessage);
+      });
+      return response.functionCalls?.[0]?.args ?? {};
+    } catch (error) {
+      if (isQuotaError(error)) {
+        console.error("Daily quota reached, using keyword fallback");
+        break; // retrying cannot fix a quota problem
+      }
+      console.error(`Attempt ${attempt} failed:`, error.message);
+      if (attempt < maxAttempts) await wait(1500 * attempt);
+    }
   }
+
+  return extractSearchCriteriaKeywords(customerMessage);
 }
 
 export function detectIntent(customerMessage) {
