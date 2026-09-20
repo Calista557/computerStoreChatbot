@@ -20,11 +20,30 @@ router.post('/', async (req, res) => {
     if (!message) return res.status(400).json({ error: 'message is required' });
 
     const criteria = await extractSearchCriteria(message);
-    const products = await searchProducts(criteria);
-    const reply = await generateReply(message, products);
+    let products = await searchProducts(criteria);
+    let isAlternative = false;
+
+    // Nothing matched exactly: fall back to what is in stock for the same
+    // category and brand, then the same category only
+    if (products.length === 0) {
+      const { category, brand } = criteria;
+      if (category || brand) {
+        products = await searchProducts({ category, brand });
+        if (products.length === 0 && brand && category) {
+          products = await searchProducts({ category });
+        }
+        isAlternative = products.length > 0;
+      }
+    }
+
+    const reply = isAlternative
+      ? await generateReply(message, products, 'We do not have an exact match for that, but these are in stock:')
+      : await generateReply(message, products);
 
     const intent = detectIntent(message);
     const needsHandoff = intent !== 'other';
+
+    // Only promise a callback if we actually have a way to reach the customer
     const followUp = customerContact
       ? handoffNotes[intent]
       : 'Please share your phone number or WhatsApp so a staff member can reach you.';
@@ -60,7 +79,14 @@ router.post('/', async (req, res) => {
       inquiryId = inquiry._id;
     }
 
-    res.json({ reply: finalReply, matchedProducts: products, criteriaUsed: criteria, inquiryId, needsHandoff });
+    res.json({
+      reply: finalReply,
+      matchedProducts: products,
+      criteriaUsed: criteria,
+      closestMatches: isAlternative,
+      inquiryId,
+      needsHandoff,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

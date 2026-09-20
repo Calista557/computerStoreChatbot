@@ -183,7 +183,7 @@ export function detectIntent(customerMessage) {
   return 'other';
 }
 
-export async function generateReply(customerMessage, products) {
+export async function generateReply(customerMessage, products, customIntro) {
   if (products.length === 0) {
     return 'Sorry, I could not find a matching computer in our current inventory. A staff member can check for you.';
   }
@@ -208,7 +208,7 @@ export async function generateReply(customerMessage, products) {
     return `${product.name}${specsText}${priceText}`;
   });
 
-  const intro = products.length > 1 ? `We have ${products.length} matching options:` : 'Yes, we have this:';
+  const intro = customIntro || (products.length > 1 ? `We have ${products.length} matching options:` : 'Yes, we have this:');
   const more = products.length > 3 ? `\n(and ${products.length - 3} more -- ask if you want to see them all)` : '';
 
   return `${intro}\n${descriptions.map((d) => `- ${d}`).join('\n')}${more}`;
