@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#0b5cff" />
+    <title>Blessed Izuchukwu Computers | Chat</title>
+
+    <style>
+      :root {
+        --primary: #0b5cff;
+        --primary-dark: #0847c7;
+        --bg: #f4f7fb;
+        --card: #ffffff;
+        --text: #172033;
+        --muted: #6b7280;
+        --border: #e5e9f0;
+        --shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+
+      html,
+      body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      body {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      button,
+      input {
+        font: inherit;
+      }
+
+      .app {
+        width: 100%;
+        max-width: 620px;
+        height: 100vh;
+        height: 100dvh;
+        max-height: 900px;
+        background: var(--card);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      /* Header */
+      .header {
+        background: linear-gradient(135deg, var(--primary), #1649b7);
+        color: #fff;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      }
+      .shop-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .shop-logo {
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        background: #fff;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 15px;
+      }
+      .shop-name {
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .shop-status {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 4px;
+        font-size: 12px;
+        opacity: 0.9;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #4ade80;
+      }
+      .header-action {
+        border: 0;
+        background: rgba(255, 255, 255, 0.15);
+        color: #fff;
+        border-radius: 9px;
+        padding: 9px 12px;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .header-action:hover {
+        background: rgba(255, 255, 255, 0.23);
+      }
+
+      /* Optional customer details */
+      .customer-details {
+        border-bottom: 1px solid var(--border);
+        padding: 10px 14px;
+        display: flex;
+        gap: 8px;
+      }
+      .customer-details input {
+        min-width: 0;
+        flex: 1;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 10px;
+        outline: none;
+        color: var(--text);
+        background: #fafbfc;
+        font-size: 13px;
+      }
+      .customer-details input:focus {
+        border-color: var(--primary);
+        background: #fff;
+      }
+
+      /* Messages */
+      #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px 16px;
+        background: var(--bg);
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .welcome {
+        text-align: center;
+        padding: 10px 15px 18px;
+      }
+      .welcome-icon {
+        width: 58px;
+        height: 58px;
+        margin: 0 auto 10px;
+        border-radius: 18px;
+        background: #e8f0ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+      }
+      .welcome-title {
+        font-weight: 700;
+        font-size: 16px;
+        margin-bottom: 5px;
+      }
+      .welcome-text {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.5;
+        max-width: 380px;
+        margin: auto;
+      }
+
+      .bubble-row {
+        display: flex;
+        width: 100%;
+      }
+      .customer-row {
+        justify-content: flex-end;
+      }
+      .bot-row {
+        justify-content: flex-start;
+      }
+      .bubble {
+        max-width: min(82%, 470px);
+        padding: 11px 13px;
+        border-radius: 15px;
+        line-height: 1.5;
+        font-size: 14px;
+        white-space: pre-wrap;
+        overflow-wrap: break-word;
+      }
+      .bot {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-bottom-left-radius: 5px;
+      }
+      .customer {
+        background: var(--primary);
+        color: #fff;
+        border-bottom-right-radius: 5px;
+      }
+
+      /* Typing indicator */
+      .typing {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 15px;
+        border-bottom-left-radius: 5px;
+        padding: 11px 14px;
+      }
+      .typing span {
+        width: 6px;
+        height: 6px;
+        background: #9ca3af;
+        border-radius: 50%;
+        animation: typing 1.2s infinite;
+      }
+      .typing span:nth-child(2) {
+        animation-delay: 0.15s;
+      }
+      .typing span:nth-child(3) {
+        animation-delay: 0.3s;
+      }
+      @keyframes typing {
+        0%,
+        60%,
+        100% {
+          transform: translateY(0);
+          opacity: 0.5;
+        }
+        30% {
+          transform: translateY(-4px);
+          opacity: 1;
+        }
+      }
+
+      /* Quick questions */
+      .quick-actions {
+        padding: 0 14px 10px;
+        background: var(--bg);
+        display: flex;
+        gap: 7px;
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .quick-actions::-webkit-scrollbar {
+        display: none;
+      }
+      .quick-btn {
+        flex: 0 0 auto;
+        border: 1px solid #d8e2f3;
+        background: #fff;
+        color: #31527f;
+        padding: 8px 11px;
+        border-radius: 20px;
+        font-size: 12px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .quick-btn:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: #f7faff;
+      }
+
+      /* Composer */
+      .composer {
+        background: #fff;
+        border-top: 1px solid var(--border);
+        padding: 10px 12px;
+      }
+      #chat-form {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      #message {
+        flex: 1;
+        min-width: 0;
+        border: 1px solid var(--border);
+        border-radius: 24px;
+        padding: 12px 15px;
+        outline: none;
+        background: #f8fafc;
+        color: var(--text);
+        font-size: 16px; /* 16px stops iPhones zooming in when the box is tapped */
+      }
+      #message:focus {
+        border-color: var(--primary);
+        background: #fff;
+      }
+      #send {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        cursor: pointer;
+        font-size: 18px;
+      }
+      #send:hover {
+        background: var(--primary-dark);
+      }
+      #send:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .privacy-note {
+        text-align: center;
+        color: #9ca3af;
+        font-size: 10px;
+        margin-top: 7px;
+      }
+
+      @media (min-width: 621px) {
+        .app {
+          height: 94vh;
+          border-radius: 18px;
+          box-shadow: var(--shadow);
+        }
+      }
+      @media (max-width: 480px) {
+        .customer-details {
+          padding: 8px 10px;
+        }
+        .customer-details input {
+          font-size: 12px;
+        }
+        #messages {
+          padding: 16px 11px;
+        }
+        .bubble {
+          max-width: 88%;
+        }
+        .shop-name {
+          font-size: 15px;
+        }
+        .header-action {
+          padding: 8px 10px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header class="header">
+        <div class="shop-info">
+          <div class="shop-logo">BIC</div>
+          <div>
+            <div class="shop-name">Blessed Izuchukwu Computers</div>
+            <div class="shop-status">
+              <span class="status-dot"></span>Computer Sales &amp; Support
+            </div>
+          </div>
+        </div>
+        <button class="header-action" type="button" data-human>
+          Talk to us
+        </button>
+      </header>
+
+      <div class="customer-details">
+        <input
+          id="name"
+          type="text"
+          placeholder="Your name (optional)"
+          autocomplete="name"
+        />
+        <input
+          id="phone"
+          type="tel"
+          placeholder="WhatsApp / Phone"
+          autocomplete="tel"
+        />
+      </div>
+
+      <main id="messages" aria-live="polite">
+        <div class="welcome">
+          <div class="welcome-icon">💻</div>
+          <div class="welcome-title">
+            Welcome to Blessed Izuchukwu Computers
+          </div>
+          <div class="welcome-text">
+            I can help you find computers and check prices and availability. For
+            orders, delivery, or price talks, a staff member will follow up with
+            you.
+          </div>
+        </div>
+
+        <div class="bubble-row bot-row">
+          <div class="bubble bot">
+            Good day! What kind of computer are you looking for? You can tell me
+            the brand, RAM, storage, or your budget.
+          </div>
+        </div>
+
+        <div id="typing-row" class="bubble-row bot-row" hidden>
+          <div class="typing"><span></span><span></span><span></span></div>
+        </div>
+      </main>
+
+      <div class="quick-actions">
+        <button
+          class="quick-btn"
+          type="button"
+          data-message="Show me available laptops"
+        >
+          💻 Available laptops
+        </button>
+        <button
+          class="quick-btn"
+          type="button"
+          data-message="Show me Dell laptops"
+        >
+          Dell laptops
+        </button>
+        <button
+          class="quick-btn"
+          type="button"
+          data-message="I need a laptop with 8GB RAM and SSD"
+        >
+          8GB + SSD
+        </button>
+        <button class="quick-btn" type="button" data-message="Do you deliver?">
+          🚚 Delivery
+        </button>
+        <button class="quick-btn" type="button" data-human>
+          👤 Talk to someone
+        </button>
+      </div>
+
+      <div class="composer">
+        <form id="chat-form">
+          <input
+            id="message"
+            type="text"
+            placeholder="Ask about a computer..."
+            autocomplete="off"
+            required
+          />
+          <button id="send" type="submit" aria-label="Send message">➤</button>
+        </form>
+        <div class="privacy-note">
+          Your details are only used to help with your enquiry.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("chat-form");
+      const messages = document.getElementById("messages");
+      const input = document.getElementById("message");
+      const sendButton = document.getElementById("send");
+      const typingRow = document.getElementById("typing-row");
+      const nameInput = document.getElementById("name");
+      const phoneInput = document.getElementById("phone");
+
+      // Must contain "speak to someone" so the server recognises it as a staff request
+      const HUMAN_REQUEST = "I want to speak to someone from the shop.";
+      let busy = false;
+
+      function scrollToBottom() {
+        messages.scrollTop = messages.scrollHeight;
+      }
+
+      function addBubble(text, who) {
+        const row = document.createElement("div");
+        row.className = `bubble-row ${who}-row`;
+
+        const bubble = document.createElement("div");
+        bubble.className = `bubble ${who}`;
+        bubble.textContent = text; // never innerHTML: customer and API text must not be treated as HTML
+
+        row.appendChild(bubble);
+        messages.insertBefore(row, typingRow);
+        scrollToBottom();
+      }
+
+      function setTyping(visible) {
+        typingRow.hidden = !visible;
+        if (visible) scrollToBottom();
+      }
+
+      async function sendMessage(text) {
+        const message = text.trim();
+        if (!message || busy) return;
+
+        busy = true;
+        sendButton.disabled = true;
+        addBubble(message, "customer");
+        input.value = "";
+        setTyping(true);
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message,
+              customerName: nameInput.value.trim() || undefined,
+              customerContact: phoneInput.value.trim() || undefined,
+              channel: "web",
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+
+          if (response.ok) {
+            addBubble(
+              data.reply || "Sorry, I could not find an answer for that.",
+              "bot",
+            );
+          } else {
+            console.error("Chat error:", data.error);
+            addBubble("Sorry, something went wrong. Please try again.", "bot");
+          }
+        } catch (error) {
+          console.error(error);
+          addBubble(
+            "Sorry, I could not connect to the shop system. Please try again.",
+            "bot",
+          );
+        } finally {
+          setTyping(false);
+          busy = false;
+          sendButton.disabled = false;
+          input.focus();
+        }
+      }
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        sendMessage(input.value);
+      });
+
+      document.querySelectorAll("[data-message]").forEach((button) => {
+        button.addEventListener("click", () =>
+          sendMessage(button.dataset.message),
+        );
+      });
+
+      document.querySelectorAll("[data-human]").forEach((button) => {
+        button.addEventListener("click", () => sendMessage(HUMAN_REQUEST));
+      });
+
+      input.focus();
+    </script>
+  </body>
+</html>
