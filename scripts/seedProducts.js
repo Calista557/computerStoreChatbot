@@ -201,8 +201,7 @@ const products = [
     category: "keyboard",
     brand: "Dell",
     condition: "new",
-    description:
-      "Standard USB keyboard for desktop computer systems.",
+    description: "Standard USB keyboard for desktop computer systems.",
     configurations: [
       {
         connectionType: "wired",
@@ -218,8 +217,7 @@ const products = [
     category: "mouse",
     brand: "Dell",
     condition: "new",
-    description:
-      "Standard USB mouse for desktop and laptop users.",
+    description: "Standard USB mouse for desktop and laptop users.",
     configurations: [
       {
         connectionType: "wired",
@@ -231,34 +229,51 @@ const products = [
   },
 ];
 
+// Shows only the host part of the address, never the password
+function describeTarget() {
+  try {
+    return new URL(process.env.MONGO_URI).host;
+  } catch {
+    return "unknown host";
+  }
+}
+
 const seedProducts = async () => {
+  console.log(`Target database host: ${describeTarget()}`);
+
+  // Safety guard: this script deletes every existing product first
+  if (!process.argv.includes("--yes")) {
+    console.log(
+      "This script DELETES all existing products before inserting the sample ones.",
+    );
+    console.log(
+      "Nothing was changed. To continue, run: node scripts/seedProducts.js --yes",
+    );
+    return;
+  }
+
   try {
     await mongoose.connect(process.env.MONGO_URI);
-
     console.log("MongoDB connected");
 
-    // Clear existing development/test products
+    // Clear existing products
     await Product.deleteMany({});
 
     // Insert the seed inventory
     const insertedProducts = await Product.insertMany(products);
-
-    console.log(
-      `${insertedProducts.length} products seeded successfully`
-    );
+    console.log(`${insertedProducts.length} products seeded successfully`);
 
     insertedProducts.forEach((product) => {
       console.log(`- ${product.name} (${product.category})`);
 
       product.configurations.forEach((configuration) => {
         console.log(
-          `  • ${configuration.storageType || configuration.resolution || "config"} — ₦${configuration.price.toLocaleString()} (stock: ${configuration.stockQuantity})`
+          `  • ${configuration.storageType || configuration.resolution || "config"} — ₦${configuration.price.toLocaleString()} (stock: ${configuration.stockQuantity})`,
         );
       });
     });
 
     await mongoose.connection.close();
-
     console.log("MongoDB connection closed");
   } catch (error) {
     console.error("Seeding failed:", error.message);
@@ -267,4 +282,3 @@ const seedProducts = async () => {
 };
 
 seedProducts();
-
