@@ -13,8 +13,8 @@ const handoffNotes = {
   'needs-human-help': 'A staff member will contact you shortly.',
 };
 
-const ASK_FOR_CONTACT =
-  'Certainly. Please enter your name and phone number or WhatsApp in the boxes above, then ask again, and a staff member will contact you.';
+   const ASK_FOR_CONTACT =
+     'Certainly. Please enter your name and phone number or WhatsApp in the boxes above and press Send, and a staff member will contact you.';
 
 // POST /api/chat  { "message": "...", "customerName": "...", "customerContact": "...", "channel": "whatsapp" }
 router.post('/', async (req, res) => {
@@ -36,7 +36,7 @@ router.post('/', async (req, res) => {
     // ask what they need, instead of listing the whole shop
     if (!hasSearchCriteria && !needsHandoff) {
       return res.json({
-        reply: 'Good day! Please tell me what you are looking for, for example a laptop, a Dell with 8GB RAM, or a computer within your budget.',
+        reply: 'Please tell me what you are looking for, for example a laptop, a Dell with 8GB RAM, or a computer within your budget.',
         matchedProducts: [],
         criteriaUsed: criteria,
         closestMatches: false,
@@ -79,7 +79,7 @@ router.post('/', async (req, res) => {
         ? (isAlternative
             ? 'A staff member will contact you shortly to help you find what you need.'
             : handoffNotes[intent])
-        : 'To arrange this, please enter your name and phone number or WhatsApp in the boxes above, then send your message again.';
+        :    'To arrange this, please enter your name and phone number or WhatsApp in the boxes above and press Send, then ask again.'
 
       finalReply = needsHandoff ? `${reply}\n\n${followUp}` : reply;
     }

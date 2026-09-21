@@ -122,27 +122,46 @@
         background: rgba(255, 255, 255, 0.23);
       }
 
-      /* Customer details */
+      /* Contact details form */
       .customer-details {
         border-bottom: 1px solid var(--border);
         padding: 10px 14px;
         display: flex;
+        flex-wrap: wrap;
         gap: 8px;
       }
       .customer-details input {
         min-width: 0;
-        flex: 1;
+        flex: 1 1 130px;
         border: 1px solid var(--border);
         border-radius: 8px;
         padding: 9px 10px;
         outline: none;
         color: var(--text);
         background: #fafbfc;
-        font-size: 13px;
+        font-size: 14px;
       }
       .customer-details input:focus {
         border-color: var(--primary);
         background: #fff;
+      }
+      .customer-details button {
+        flex: 0 0 auto;
+        border: 0;
+        border-radius: 8px;
+        background: var(--primary);
+        color: #fff;
+        padding: 9px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .customer-details button:hover {
+        background: var(--primary-dark);
+      }
+      .customer-details button:disabled {
+        opacity: 0.5;
+        cursor: default;
       }
 
       /* Messages */
@@ -341,7 +360,10 @@
           padding: 8px 10px;
         }
         .customer-details input {
-          font-size: 12px;
+          font-size: 16px;
+        }
+        .customer-details button {
+          flex: 1 1 100%;
         }
         #messages {
           padding: 16px 11px;
@@ -377,20 +399,23 @@
         </button>
       </header>
 
-      <div class="customer-details">
+      <form id="contact-form" class="customer-details">
         <input
           id="name"
           type="text"
-          placeholder="Your name (optional)"
+          placeholder="Your name"
           autocomplete="name"
+          required
         />
         <input
           id="phone"
           type="tel"
-          placeholder="WhatsApp / Phone"
+          placeholder="WhatsApp / Phone number"
           autocomplete="tel"
+          required
         />
-      </div>
+        <button id="contact-send" type="submit">Send</button>
+      </form>
 
       <main id="messages" aria-live="polite">
         <div class="welcome">
@@ -404,13 +429,6 @@
             you.
           </div>
         </div>
-
-        <!-- <div class="bubble-row bot-row">
-          <div class="bubble bot">
-            Good day! What kind of computer are you looking for? You can tell me
-            the brand, RAM, storage, or your budget.
-          </div>
-        </div> -->
 
         <div id="typing-row" class="bubble-row bot-row" hidden>
           <div class="typing"><span></span><span></span><span></span></div>
@@ -466,6 +484,8 @@
 
     <script>
       const form = document.getElementById("chat-form");
+      const contactForm = document.getElementById("contact-form");
+      const contactSend = document.getElementById("contact-send");
       const messages = document.getElementById("messages");
       const input = document.getElementById("message");
       const sendButton = document.getElementById("send");
@@ -475,7 +495,17 @@
 
       // Must contain "speak to someone" so the server recognises it as a staff request
       const HUMAN_REQUEST = "I want to speak to someone from the shop.";
+
       let busy = false;
+      let customer = { name: "", contact: "" }; // filled in once the details have been sent
+
+      // Uses the sent details, or whatever is typed in the boxes
+      function currentName() {
+        return customer.name || nameInput.value.trim();
+      }
+      function currentContact() {
+        return customer.contact || phoneInput.value.trim();
+      }
 
       function scrollToBottom() {
         messages.scrollTop = messages.scrollHeight;
@@ -509,7 +539,7 @@
         input.value = "";
         setTyping(true);
 
-        // True when the bot needs a phone number before staff can follow up
+        // True when the bot needs contact details before staff can follow up
         let needsContact = false;
 
         try {
@@ -518,8 +548,8 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               message,
-              customerName: nameInput.value.trim() || undefined,
-              customerContact: phoneInput.value.trim() || undefined,
+              customerName: currentName() || undefined,
+              customerContact: currentContact() || undefined,
               channel: "web",
             }),
           });
@@ -546,9 +576,68 @@
           setTyping(false);
           busy = false;
           sendButton.disabled = false;
-          (needsContact ? phoneInput : input).focus();
+          (needsContact ? nameInput : input).focus();
         }
       }
+
+      // Sending the contact details: save a staff inquiry, then hide the form
+      contactForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const name = nameInput.value.trim();
+        const contact = phoneInput.value.trim();
+        const digits = contact.replace(/\D/g, "");
+        const isNigerian = digits.length === 11 && digits.startsWith("0");
+        const isInternational =
+          contact.startsWith("+") && digits.length >= 10 && digits.length <= 15;
+
+        if (!name || !(isNigerian || isInternational)) {
+          addBubble(
+            "Please enter your name and a full phone or WhatsApp number, for example 08012345678 or +2348012345678, then press Send.",
+            "bot",
+          );
+          return;
+        }
+
+        contactSend.disabled = true;
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: HUMAN_REQUEST,
+              customerName: name,
+              customerContact: contact,
+              channel: "web",
+            }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.inquiryId)
+            throw new Error(data.error || "Details were not saved");
+
+          customer = { name, contact };
+          contactForm.hidden = true;
+          document.querySelectorAll("[data-human]").forEach((button) => {
+            button.hidden = true;
+          });
+
+          addBubble(
+            `Thank you, ${name}. We have received your number (${contact}). Kindly wait for a staff member to reach you. In the meantime, you are welcome to keep asking about our computers.`,
+            "bot",
+          );
+          input.focus();
+        } catch (error) {
+          console.error(error);
+          addBubble(
+            "Sorry, we could not save your details just now. Please try again.",
+            "bot",
+          );
+        } finally {
+          contactSend.disabled = false;
+        }
+      });
 
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -561,11 +650,20 @@
         );
       });
 
+      // "Talk to us" points the customer to the details form
       document.querySelectorAll("[data-human]").forEach((button) => {
-        button.addEventListener("click", () => sendMessage(HUMAN_REQUEST));
+        button.addEventListener("click", () => {
+          addBubble(
+            "Please enter your name and phone number in the boxes above and press Send. A staff member will then contact you.",
+            "bot",
+          );
+          nameInput.focus();
+        });
       });
+
+      // Greeting is added here so an editor's auto-format cannot break its line breaks
       addBubble(
-        "Welcome to Blessed Izuchukwu Computers. What are you looking for today? Tell me what you need, and if you have a preferred brand, RAM, storage, or budget, feel free to share that too. I will help you find a suitable option.",
+        " Welcome to Blessed Izuchukwu Computers. What are you looking for today? Tell me what you need, and if you have a preferred brand, RAM, storage, or budget, feel free to share that too. I will help you find a suitable option.",
         "bot",
       );
       input.focus();
