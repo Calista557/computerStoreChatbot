@@ -8,6 +8,7 @@ import inquiryRoutes from './routes/inquiryRoutes.js';
 const app = express();
 
 app.use(express.json());
+app.use(express.static('public'));
 
 app.use('/api/products', productRoutes);
 app.use('/api/chat', chatRoutes);
