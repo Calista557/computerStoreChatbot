@@ -405,12 +405,12 @@
           </div>
         </div>
 
-        <div class="bubble-row bot-row">
+        <!-- <div class="bubble-row bot-row">
           <div class="bubble bot">
             Good day! What kind of computer are you looking for? You can tell me
             the brand, RAM, storage, or your budget.
           </div>
-        </div>
+        </div> -->
 
         <div id="typing-row" class="bubble-row bot-row" hidden>
           <div class="typing"><span></span><span></span><span></span></div>
@@ -564,7 +564,10 @@
       document.querySelectorAll("[data-human]").forEach((button) => {
         button.addEventListener("click", () => sendMessage(HUMAN_REQUEST));
       });
-
+      addBubble(
+        "Welcome to Blessed Izuchukwu Computers. What are you looking for today? Tell me what you need, and if you have a preferred brand, RAM, storage, or budget, feel free to share that too. I will help you find a suitable option.",
+        "bot",
+      );
       input.focus();
     </script>
   </body>
